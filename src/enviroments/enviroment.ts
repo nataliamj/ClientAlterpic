@@ -15,6 +15,7 @@ export const environment = {
         images: {
             upload: '/images/upload',
             transform: '/images/transform',
+            download: '/images/download',
             list: '/images',
             delete: (id: number) => `/images/${id}`
         },

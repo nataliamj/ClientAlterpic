@@ -1,9 +1,11 @@
 import { Component, inject } from '@angular/core';
 import { AuthService } from '../../../features/auth/services/auth.service';
-
+import { RouterLink } from '@angular/router';
 @Component({
   selector: 'app-header',
   standalone: true,
+  imports: [RouterLink], // ← A
+
   template: `
     <header class="bg-white/10 backdrop-blur-lg border-b border-white/20">
       <div class="flex items-center justify-between p-4">

@@ -31,7 +31,7 @@ import { AuthService } from '../../../features/auth/services/auth.service';
         <!-- Transformar (solo para autenticados) -->
         @if (authService.isAuthenticated()) {
           <a 
-            routerLink="/images/transform" 
+            routerLink="/images/upload" 
             routerLinkActive="bg-black/20 text-white"
             class="flex items-center px-4 py-3 rounded-xl text-white/80 hover:bg-white/10 transition-all duration-200 group"
           >

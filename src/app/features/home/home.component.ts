@@ -30,7 +30,7 @@ import { RouterLink } from '@angular/router';
                 <!-- Acciones rápidas para usuarios autenticados -->
                 <div class="grid md:grid-cols-2 gap-6 mb-8">
                   <a 
-                    routerLink="/images/transform" 
+                    routerLink="/images/upload" 
                     class="bg-white/10 backdrop-blur-lg rounded-2xl p-6 hover:bg-white/20 transition group"
                   >
                     <div class="text-center">
