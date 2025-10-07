@@ -73,26 +73,33 @@ export class ImageService {
 
   // Subir imágenes al servidor
   async uploadImages(images: ImageFile[]): Promise<boolean> {
-    this.isLoading.set(true);
-    this.errorMessage.set('');
+  this.isLoading.set(true);
+  this.errorMessage.set('');
 
-    try {
-      const formData = new FormData();
-      images.forEach(image => {
-        formData.append('images', image.file);
-      });
+  try {
+    const formData = new FormData();
+    images.forEach(image => {
+      formData.append('images', image.file);
+    });
 
-      const url = `${this.apiUrl}${environment.endpoints.images.upload}`;
-      const response = await this.http.post<any>(url, formData).toPromise();
-      
-      return response?.success || false;
-    } catch (error) {
-      this.errorMessage.set('Error al subir las imágenes');
-      return false;
-    } finally {
-      this.isLoading.set(false);
+    const token = localStorage.getItem('auth_token');
+    const headers: any = {};
+    
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
     }
+
+    const url = `${this.apiUrl}${environment.endpoints.images.upload}`;
+    const response = await this.http.post<any>(url, formData, { headers }).toPromise();
+    
+    return response?.success || false;
+  } catch (error) {
+    this.errorMessage.set('Error al subir las imágenes');
+    return false;
+  } finally {
+    this.isLoading.set(false);
   }
+}
 
   // Aplicar transformaciones
  async applyTransformations(request: BatchTransformationRequest): Promise<BatchResult | null> {
