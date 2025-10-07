@@ -123,12 +123,20 @@ export class ImageService {
     
     clearInterval(simulateProgress);
     this.progress.set({ ...this.progress(), status: 'completed' });
+    console.log('Attempting POST to:', url);
+    console.log('Request payload:', request);
+
+    
+    console.log('Response received:', response);
     
     return response || null;
   } catch (error) {
     this.errorMessage.set('Error al aplicar transformaciones');
     this.progress.set({ ...this.progress(), status: 'error' });
+    console.error('Full error details:', error);
+        
     return null;
+
   } finally {
     this.isLoading.set(false);
   }
