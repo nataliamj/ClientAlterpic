@@ -88,7 +88,7 @@ import { RegisterRequest } from '../../models/user.model';
             <!-- Submit Button -->
             <button 
               type="submit" 
-              [disabled]="authService.isLoading() || registerForm.invalid"
+              [disabled]="authService.isLoading()"
               class="w-full bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-3 px-4 rounded-lg font-medium hover:from-blue-700 hover:to-indigo-800 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               @if (authService.isLoading()) {
@@ -124,7 +124,6 @@ export class RegisterComponent {
   authService = inject(AuthService);
   router = inject(Router);
 
-  // ✅ PRIMERO definir el validador
   private passwordMatchValidator: ValidatorFn = (control: AbstractControl) => {
     const formGroup = control as FormGroup;
     const password = formGroup.get('password')?.value;
@@ -136,7 +135,6 @@ export class RegisterComponent {
     return null;
   }
 
-  // ✅ LUEGO el FormGroup que lo usa
   registerForm = new FormGroup({
     name: new FormControl('', [Validators.required, Validators.minLength(2)]),
     email: new FormControl('', [Validators.required, Validators.email]),
@@ -144,13 +142,37 @@ export class RegisterComponent {
     confirmPassword: new FormControl('', [Validators.required])
   }, { validators: this.passwordMatchValidator });
 
-  async onSubmit() {
-    if (this.registerForm.valid) {
+  async onSubmit() { 
+    this.markFormGroupTouched(this.registerForm);
+     
+    if (this.registerForm.valid || this.hasOnlyMinorValidationErrors()) {
       const { confirmPassword, ...userData } = this.registerForm.value;
+       
       const success = await this.authService.register(userData as RegisterRequest);
+      
       if (success) {
         this.router.navigate(['/']);
       }
     }
   }
-}
+
+  private markFormGroupTouched(formGroup: FormGroup) {
+    Object.keys(formGroup.controls).forEach(key => {
+      const control = formGroup.get(key);
+      control?.markAsTouched();
+    });
+  }
+
+  private hasOnlyMinorValidationErrors(): boolean { 
+    const hasNameError = !!this.registerForm.get('name')?.invalid;
+    const hasEmailError = !!this.registerForm.get('email')?.invalid;
+    const hasPasswordError = !!this.registerForm.get('password')?.invalid;
+    const hasMismatchError = this.registerForm.hasError('mismatch');
+     
+    if (hasMismatchError) {
+      return false;
+    }
+     
+    return hasNameError || hasEmailError || hasPasswordError;
+  }
+} 

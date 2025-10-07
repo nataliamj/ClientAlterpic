@@ -4,12 +4,10 @@ import { environment } from '../../../../enviroments/enviroment';
 import { User, LoginRequest, RegisterRequest, AuthResponse } from '../models/user.model';
 import { firstValueFrom } from 'rxjs';
 
-
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private apiUrl = environment.apiUrl;
-  
-  // ↔ State management con Signals (como tu Subject/Observer)
+   
   private currentUserSignal = signal<User | null>(null);
   public currentUser = this.currentUserSignal.asReadonly();
   public isLoading = signal(false);
@@ -17,14 +15,14 @@ export class AuthService {
 
   constructor(private http: HttpClient) {}
 
-  // ↔ MÉTODO LOGIN (equivalente a tu init())
+  // login
   async login(credentials: LoginRequest): Promise<boolean> {
     this.isLoading.set(true);
     this.errorMessage.set('');
 
     try {
       const url = `${this.apiUrl}${environment.endpoints.auth.login}`;
-      const response = await this.http.post<AuthResponse>(url, credentials).toPromise();
+       const response = await this.http.post<AuthResponse>(url, credentials).toPromise();
       
       if (response?.success) {
         this.currentUserSignal.set(response.user);
@@ -42,7 +40,7 @@ export class AuthService {
     }
   }
 
-  // ↔ MÉTODO REGISTER
+  // register
 async register(userData: RegisterRequest): Promise<boolean> {
   this.isLoading.set(true);
   this.errorMessage.set('');
