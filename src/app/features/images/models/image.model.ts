@@ -40,7 +40,7 @@ export interface TransformationProgress {
   total: number;
   processed: number;
   percentage: number;
-  status: 'processing' | 'completed' | 'error';
+  status: 'processing' | 'completed' | 'error' | 'idle';
 }
 
 export interface TransformedImage {
@@ -58,4 +58,10 @@ export interface BatchResult {
   totalSize: number;
   imageCount: number;
   downloadZipUrl?: string;
+}
+export interface DownloadResponse {
+  success: boolean;
+  message: string;
+  batchId?: string;
+  downloadUrl?: string;
 }

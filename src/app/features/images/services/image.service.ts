@@ -135,13 +135,120 @@ export class ImageService {
 }
 
   // Descargar resultado
+  // Dentro de tu ImageService existente, agrega estas propiedades:
+  public currentBatch = signal<BatchResult | null>(null);
+
+  // Y estos métodos NUEVOS:
   async downloadResult(batchId: string, downloadType: 'zip' | 'individual' = 'zip'): Promise<void> {
     try {
-      const url = `${this.apiUrl}/download/${batchId}?type=${downloadType}`;
-      // Implementar lógica de descarga
-      window.open(url, '_blank');
+      let url: string;
+      
+      if (downloadType === 'zip') {
+        url = `${this.apiUrl}/images/download/batch/${batchId}`;
+      } else {
+        url = `${this.apiUrl}/images/download/${batchId}`;
+      }
+      
+      // Crear enlace de descarga
+      const link = document.createElement('a');
+      link.href = url;
+      link.target = '_blank';
+      link.download = `transformaciones_${batchId}.${downloadType === 'zip' ? 'zip' : 'jpg'}`;
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
     } catch (error) {
       this.errorMessage.set('Error al descargar los resultados');
+      throw error;
     }
   }
+
+  // Descargar imagen individual
+  async downloadSingleImage(imageId: string, filename: string): Promise<void> {
+    try {
+      const url = `${this.apiUrl}/images/download/${imageId}`;
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.target = '_blank';
+      link.download = filename;
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+    } catch (error) {
+      this.errorMessage.set('Error descargando imagen individual');
+      throw error;
+    }
+  }
+
+  // Método para simular un batch completado (para testing)
+  setCurrentBatch(batch: BatchResult): void {
+    this.currentBatch.set(batch);
+    this.progress.set({ 
+      total: batch.imageCount, 
+      processed: batch.imageCount, 
+      percentage: 100, 
+      status: 'completed' 
+    });
+  }
+
+  // Resetear estado
+  reset(): void {
+    this.selectedImages.set([]);
+    this.currentBatch.set(null);
+    this.progress.set({ 
+      total: 0, 
+      processed: 0, 
+      percentage: 0, 
+      status: 'idle' 
+    });
+}
+
+
+
+
+
+
+
+// Agregar estas propiedades al servicilast 
+
+// Modificar applyTransformations para guardar el resultado
+async applyTransformations2(request: BatchTransformationRequest): Promise<BatchResult | null> {
+  this.isLoading.set(true);
+  this.errorMessage.set('');
+  
+  try {
+    const url = `${this.apiUrl}${environment.endpoints.images.transform}`;
+    
+    const response = await this.http.post<BatchResult>(url, request).toPromise();
+    
+    if (response) {
+      // GUARDAR EL RESULTADO PARA EL DOWNLOAD
+      this.currentBatch.set(response);
+      this.progress.set({ 
+        total: response.imageCount, 
+        processed: response.imageCount, 
+        percentage: 100, 
+        status: 'completed' 
+      });
+    }
+    
+    return response || null;
+  } catch (error) {
+    this.errorMessage.set('Error al aplicar transformaciones');
+    this.progress.set({ ...this.progress(), status: 'error' });
+    return null;
+  } finally {
+    this.isLoading.set(false);
+  }
+}
+
+// Método para verificar si hay un batch listo para descargar
+hasProcessedBatch(): boolean {
+  return this.currentBatch() !== null && this.progress().status === 'completed';
+}
 }
