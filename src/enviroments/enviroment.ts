@@ -1,11 +1,10 @@
 export const environment = {
     production: false,
-    apiUrl: 'http://localhost:3000/api/v1',
+    apiUrl: 'http://localhost:3000/api',
     endpoints: {
         auth: {
             login: '/auth/login',
             register: '/auth/register',
-            refresh: '/auth/refresh',
             logout: '/auth/logout'
         },
         users: {
