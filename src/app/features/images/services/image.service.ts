@@ -102,14 +102,27 @@ export class ImageService {
 }
 
   // Aplicar transformaciones
- async applyTransformations(request: BatchTransformationRequest): Promise<BatchResult | null> {
+async applyTransformations(request: BatchTransformationRequest): Promise<BatchResult | null> {
   this.isLoading.set(true);
   this.errorMessage.set('');
   this.progress.set({ total: request.applyToAll ? 1 : (request.imageConfigs?.length || 0), processed: 0, percentage: 0, status: 'processing' });
 
   try {
     const url = `${this.apiUrl}${environment.endpoints.images.transform}`;
+
+    console.log('🔄 === INICIANDO TRANSFORMACIÓN ===');
+    console.log('📤 URL:', url);
+    console.log('🔐 Token en localStorage:', localStorage.getItem('auth_token'));
+    console.log('📦 Request payload:', JSON.stringify(request, null, 2));
     
+    // Verificar headers antes de enviar
+    const token = localStorage.getItem('auth_token');
+    console.log('🔍 Token presente para enviar:', !!token);
+    if (token) {
+      console.log('🔍 Token length:', token.length);
+      console.log('🔍 Token preview:', token.substring(0, 20) + '...');
+    }
+
     // Simular progreso
     const simulateProgress = setInterval(() => {
       const currentProgress = this.progress();
@@ -126,26 +139,37 @@ export class ImageService {
       }
     }, 500);
 
+    console.log('🚀 Enviando petición POST...');
     const response = await this.http.post<BatchResult>(url, request).toPromise();
     
     clearInterval(simulateProgress);
     this.progress.set({ ...this.progress(), status: 'completed' });
-    console.log('Attempting POST to:', url);
-    console.log('Request payload:', request);
-
     
-    console.log('Response received:', response);
+    console.log('✅ === TRANSFORMACIÓN EXITOSA ===');
+    console.log('📥 Response recibida:', response);
     
     return response || null;
-  } catch (error) {
+
+  } catch (error: any) {
+    console.error('❌ === ERROR EN TRANSFORMACIÓN ===');
+    console.error('💥 Error completo:', error);
+    console.error('📊 Status code:', error.status);
+    console.error('📝 Status text:', error.statusText);
+    console.error('🔍 Error message:', error.message);
+    console.error('📨 Error URL:', error.url);
+    
+    if (error.error) {
+      console.error('📋 Error body:', error.error);
+    }
+
     this.errorMessage.set('Error al aplicar transformaciones');
     this.progress.set({ ...this.progress(), status: 'error' });
-    console.error('Full error details:', error);
         
     return null;
 
   } finally {
     this.isLoading.set(false);
+    console.log('🏁 === TRANSFORMACIÓN FINALIZADA ===');
   }
 }
 

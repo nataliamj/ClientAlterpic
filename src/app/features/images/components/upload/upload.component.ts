@@ -218,21 +218,33 @@ export class UploadComponent {
     return this.imageService.selectedImages().some(img => img.selected);
   }
 
-  async continueToTransform(): Promise<void> {
+ async continueToTransform(): Promise<void> {
   if (!this.hasSelectedImages()) return;
 
-  // Determinar el modo basado en la selección del usuario
+  // ✅ PRIMERO SUBIR IMÁGENES AL BACKEND
+  const selectedImages = this.imageService.selectedImages().filter(img => img.selected);
+  
+  console.log('📤 Subiendo imágenes al backend...', selectedImages.length);
+  
+  const uploadSuccess = await this.imageService.uploadImages(selectedImages);
+  
+  if (!uploadSuccess) {
+    console.error('❌ Error subiendo imágenes');
+    return;
+  }
+
+  console.log('✅ Imágenes subidas exitosamente');
+
+  // ✅ LUEGO NAVEGAR A TRANSFORM
   const mode = this.applyToAll() ? 'batch' : 'individual';
   this.imageService.transformationMode.set(mode);
 
-  // Guardar configuración básica
   this.imageService.transformationConfig.set({
     applyToAll: this.applyToAll(),
     transformations: [],
     outputFormat: 'JPG'
   });
 
-  // Navegar a la siguiente vista
   this.router.navigate(['/images/configure']);
 }
 }
