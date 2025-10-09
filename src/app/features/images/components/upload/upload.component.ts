@@ -1,4 +1,4 @@
-import { Component, inject, ElementRef, ViewChild, signal } from '@angular/core';
+  import { Component, inject, ElementRef, ViewChild, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { ImageService } from '../../services/image.service';
 import { ImageFile } from '../../models/image.model';
@@ -221,21 +221,21 @@ export class UploadComponent {
  async continueToTransform(): Promise<void> {
   if (!this.hasSelectedImages()) return;
 
-  // ✅ PRIMERO SUBIR IMÁGENES AL BACKEND
+  //   PRIMERO SUBIR IMÁGENES AL BACKEND
   const selectedImages = this.imageService.selectedImages().filter(img => img.selected);
   
-  console.log('📤 Subiendo imágenes al backend...', selectedImages.length);
+  console.log('   Subiendo imágenes al backend...', selectedImages.length);
   
   const uploadSuccess = await this.imageService.uploadImages(selectedImages);
   
   if (!uploadSuccess) {
-    console.error('❌ Error subiendo imágenes');
+    console.error('   Error subiendo imágenes');
     return;
   }
 
-  console.log('✅ Imágenes subidas exitosamente');
+  console.log('   Imágenes subidas exitosamente');
 
-  // ✅ LUEGO NAVEGAR A TRANSFORM
+  //    LUEGO NAVEGAR A TRANSFORM
   const mode = this.applyToAll() ? 'batch' : 'individual';
   this.imageService.transformationMode.set(mode);
 

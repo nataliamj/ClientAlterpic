@@ -1,4 +1,4 @@
-import { Injectable, signal } from '@angular/core';
+ import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../enviroments/enviroment';
 import { 
@@ -23,10 +23,10 @@ export class ImageService {
     total: 0, 
     processed: 0, 
     percentage: 0, 
-    status: 'idle'  // ✅ CAMBIADO de 'processing' a 'idle'
+    status: 'idle'  //   CAMBIADO de 'processing' a 'idle'
   });
 
-  // ✅ MOVER currentBatch AL INICIO - ES CRÍTICO
+  //           MOVER currentBatch AL INICIO - ES CRÍTICO
   public currentBatch = signal<BatchResult | null>(null);
 
   constructor(private http: HttpClient) {}
@@ -104,7 +104,7 @@ export class ImageService {
     }
   }
 
-  // ✅ SOLO UN MÉTODO applyTransformations - EL CORRECTO
+  //          SOLO UN MÉTODO applyTransformations - EL CORRECTO
   async applyTransformations(request: BatchTransformationRequest): Promise<BatchResult | null> {
     this.isLoading.set(true);
     this.errorMessage.set('');
@@ -118,9 +118,9 @@ export class ImageService {
     try {
       const url = `${this.apiUrl}${environment.endpoints.images.transform}`;
 
-      console.log('🔄 === INICIANDO TRANSFORMACIÓN ===');
-      console.log('📤 URL:', url);
-      console.log('📦 Request payload:', JSON.stringify(request, null, 2));
+      console.log('         === INICIANDO TRANSFORMACIÓN ===');
+      console.log('         URL:', url);
+      console.log('         Request payload:', JSON.stringify(request, null, 2));
       
       // Simular progreso
       const simulateProgress = setInterval(() => {
@@ -138,14 +138,14 @@ export class ImageService {
         }
       }, 500);
 
-      console.log('🚀 Enviando petición POST...');
+      console.log('        Enviando petición POST...');
       const response = await this.http.post<BatchResult>(url, request).toPromise();
       
       clearInterval(simulateProgress);
       
-      // ✅✅✅ PARTE CRÍTICA - GUARDAR EL RESULTADO
+      //         PARTE CRÍTICA - GUARDAR EL RESULTADO
       if (response) {
-        console.log('💾 Guardando resultado en currentBatch...');
+        console.log('        Guardando resultado en currentBatch...');
         this.currentBatch.set(response);
         this.progress.set({ 
           total: response.imageCount, 
@@ -154,28 +154,28 @@ export class ImageService {
           status: 'completed' 
         });
         
-        console.log('✅ Estado actualizado - currentBatch:', this.currentBatch());
-        console.log('✅ Estado actualizado - progress:', this.progress());
+        console.log('       Estado actualizado - currentBatch:', this.currentBatch());
+        console.log('       Estado actualizado - progress:', this.progress());
       } else {
-        console.warn('⚠️ Response recibida pero es null o undefined');
+        console.warn('       Response recibida pero es null o undefined');
       }
       
-      console.log('✅ === TRANSFORMACIÓN EXITOSA ===');
-      console.log('📥 Response recibida:', response);
+      console.log('       === TRANSFORMACIÓN EXITOSA ===');
+      console.log('       Response recibida:', response);
       
       return response || null;
 
     } catch (error: any) {
-      console.error('❌ === ERROR EN TRANSFORMACIÓN ===', error);
+      console.error('  === ERROR EN TRANSFORMACIÓN ===', error);
       this.errorMessage.set('Error al aplicar transformaciones');
       this.progress.set({ ...this.progress(), status: 'error' });
       return null;
     } finally {
       this.isLoading.set(false);
-      console.log('🏁 === TRANSFORMACIÓN FINALIZADA ===');
-      console.log('🔍 Estado final - currentBatch:', this.currentBatch());
-      console.log('🔍 Estado final - progress:', this.progress());
-      console.log('🔍 Estado final - hasProcessedBatch:', this.hasProcessedBatch());
+      console.log('      === TRANSFORMACIÓN FINALIZADA ===');
+      console.log('      Estado final - currentBatch:', this.currentBatch());
+      console.log('      Estado final - progress:', this.progress());
+      console.log('      Estado final - hasProcessedBatch:', this.hasProcessedBatch());
     }
   }
 
@@ -190,7 +190,7 @@ export class ImageService {
         url = `${this.apiUrl}/images/download/${batchId}`;
       }
       
-      console.log('📥 Iniciando descarga:', { batchId, downloadType, url });
+      console.log('     Iniciando descarga:', { batchId, downloadType, url });
       
       // Crear enlace de descarga
       const link = document.createElement('a');
@@ -202,10 +202,10 @@ export class ImageService {
       link.click();
       document.body.removeChild(link);
       
-      console.log('✅ Descarga iniciada');
+      console.log('     Descarga iniciada');
       
     } catch (error) {
-      console.error('❌ Error en downloadResult:', error);
+      console.error('     Error en downloadResult:', error);
       this.errorMessage.set('Error al descargar los resultados');
       throw error;
     }
@@ -216,7 +216,7 @@ export class ImageService {
     try {
       const url = `${this.apiUrl}/images/download/${imageId}`;
       
-      console.log('📥 Iniciando descarga individual:', { imageId, filename, url });
+      console.log('    Iniciando descarga individual:', { imageId, filename, url });
       
       const link = document.createElement('a');
       link.href = url;
@@ -227,10 +227,10 @@ export class ImageService {
       link.click();
       document.body.removeChild(link);
       
-      console.log('✅ Descarga individual iniciada');
+      console.log('    Descarga individual iniciada');
       
     } catch (error) {
-      console.error('❌ Error en downloadSingleImage:', error);
+      console.error('    Error en downloadSingleImage:', error);
       this.errorMessage.set('Error descargando imagen individual');
       throw error;
     }
@@ -238,7 +238,7 @@ export class ImageService {
 
   // Método para simular un batch completado (para testing)
   setCurrentBatch(batch: BatchResult): void {
-    console.log('🧪 setCurrentBatch llamado con:', batch);
+    console.log('   setCurrentBatch llamado con:', batch);
     this.currentBatch.set(batch);
     this.progress.set({ 
       total: batch.imageCount, 
@@ -250,7 +250,7 @@ export class ImageService {
 
   // Resetear estado
   reset(): void {
-    console.log('🔄 Reseteando estado del servicio...');
+    console.log('   Reseteando estado del servicio...');
     this.selectedImages.set([]);
     this.currentBatch.set(null);
     this.progress.set({ 
@@ -260,7 +260,7 @@ export class ImageService {
       status: 'idle' 
     });
     this.errorMessage.set('');
-    console.log('✅ Estado reseteado');
+    console.log('  Estado reseteado');
   }
 
   // Método para verificar si hay un batch listo para descargar
@@ -268,18 +268,14 @@ export class ImageService {
     const hasBatch = this.currentBatch() !== null;
     const isCompleted = this.progress().status === 'completed';
     
-    console.log('🔍 SERVICE - hasProcessedBatch check:');
-    console.log('🔍 - currentBatch:', this.currentBatch());
-    console.log('🔍 - hasBatch:', hasBatch);
-    console.log('🔍 - progress.status:', this.progress().status);
-    console.log('🔍 - isCompleted:', isCompleted);
-    console.log('🔍 - RESULT:', hasBatch && isCompleted);
+    console.log('  SERVICE - hasProcessedBatch check:');
+    console.log('  - currentBatch:', this.currentBatch());
+    console.log('  - hasBatch:', hasBatch);
+    console.log('  - progress.status:', this.progress().status);
+    console.log('  - isCompleted:', isCompleted);
+    console.log('  - RESULT:', hasBatch && isCompleted);
     
     return hasBatch && isCompleted;
   }
-
-  // ✅ ELIMINAR LOS MÉTODOS DUPLICADOS:
-  // - applyTransformations2 
-  // - applyTransformations3
-  // Estos métodos causan confusión y no se deben usar
-}
+ 
+    }

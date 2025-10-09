@@ -195,7 +195,7 @@ import { FormsModule } from '@angular/forms';
                                   (click)="removeTransformation(transformation.id)"
                                   class="text-red-400 hover:text-red-300 text-xs flex-shrink-0"
                                 >
-                                  ×
+                                   
                                 </button>
                               </div>
                             }
@@ -463,25 +463,25 @@ export class TransformComponent {
     };
   }
 
-  console.log('🔄 TransformComponent - Iniciando transformación...');
-  console.log('📤 Request enviado:', request);
+  console.log('  TransformComponent - Iniciando transformación...');
+  console.log('  Request enviado:', request);
   
   const result = await this.imageService.applyTransformations(request);
   
   if (result) {
-    console.log('✅ TransformComponent - Transformación exitosa, navegando...');
-    console.log('📊 Estado del servicio antes de navegar:');
-    console.log('📊 - currentBatch:', this.imageService.currentBatch());
-    console.log('📊 - progress:', this.imageService.progress());
-    console.log('📊 - hasProcessedBatch:', this.imageService.hasProcessedBatch());
+    console.log('  TransformComponent - Transformación exitosa, navegando...');
+    console.log('  Estado del servicio antes de navegar:');
+    console.log('  - currentBatch:', this.imageService.currentBatch());
+    console.log('  - progress:', this.imageService.progress());
+    console.log('  - hasProcessedBatch:', this.imageService.hasProcessedBatch());
     
     // Esperar un tick del ciclo de detección de cambios
     setTimeout(() => {
-      console.log('🧭 Navegando a /images/download...');
+      console.log('  Navegando a /images/download...');
       this.router.navigate(['/images/download']);
     }, 100);
   } else {
-    console.error('❌ TransformComponent - Transformación falló');
+    console.error('  TransformComponent - Transformación falló');
     this.imageService.errorMessage.set('Error en la transformación');
   }
 }
