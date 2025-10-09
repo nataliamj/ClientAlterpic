@@ -23,8 +23,11 @@ export class ImageService {
     total: 0, 
     processed: 0, 
     percentage: 0, 
-    status: 'processing' 
+    status: 'idle'  // ✅ CAMBIADO de 'processing' a 'idle'
   });
+
+  // ✅ MOVER currentBatch AL INICIO - ES CRÍTICO
+  public currentBatch = signal<BatchResult | null>(null);
 
   constructor(private http: HttpClient) {}
 
@@ -73,111 +76,110 @@ export class ImageService {
 
   // Subir imágenes al servidor
   async uploadImages(images: ImageFile[]): Promise<boolean> {
-  this.isLoading.set(true);
-  this.errorMessage.set('');
+    this.isLoading.set(true);
+    this.errorMessage.set('');
 
-  try {
-    const formData = new FormData();
-    images.forEach(image => {
-      formData.append('images', image.file);
+    try {
+      const formData = new FormData();
+      images.forEach(image => {
+        formData.append('images', image.file);
+      });
+
+      const token = localStorage.getItem('auth_token');
+      const headers: any = {};
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const url = `${this.apiUrl}${environment.endpoints.images.upload}`;
+      const response = await this.http.post<any>(url, formData, { headers }).toPromise();
+      
+      return response?.success || false;
+    } catch (error) {
+      this.errorMessage.set('Error al subir las imágenes');
+      return false;
+    } finally {
+      this.isLoading.set(false);
+    }
+  }
+
+  // ✅ SOLO UN MÉTODO applyTransformations - EL CORRECTO
+  async applyTransformations(request: BatchTransformationRequest): Promise<BatchResult | null> {
+    this.isLoading.set(true);
+    this.errorMessage.set('');
+    this.progress.set({ 
+      total: request.applyToAll ? 1 : (request.imageConfigs?.length || 0), 
+      processed: 0, 
+      percentage: 0, 
+      status: 'processing' 
     });
 
-    const token = localStorage.getItem('auth_token');
-    const headers: any = {};
-    
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
+    try {
+      const url = `${this.apiUrl}${environment.endpoints.images.transform}`;
 
-    const url = `${this.apiUrl}${environment.endpoints.images.upload}`;
-    const response = await this.http.post<any>(url, formData, { headers }).toPromise();
-    
-    return response?.success || false;
-  } catch (error) {
-    this.errorMessage.set('Error al subir las imágenes');
-    return false;
-  } finally {
-    this.isLoading.set(false);
-  }
-}
+      console.log('🔄 === INICIANDO TRANSFORMACIÓN ===');
+      console.log('📤 URL:', url);
+      console.log('📦 Request payload:', JSON.stringify(request, null, 2));
+      
+      // Simular progreso
+      const simulateProgress = setInterval(() => {
+        const currentProgress = this.progress();
+        if (currentProgress.processed < currentProgress.total) {
+          const newProcessed = currentProgress.processed + 1;
+          const newPercentage = (newProcessed / currentProgress.total) * 100;
+          this.progress.set({
+            ...currentProgress,
+            processed: newProcessed,
+            percentage: Math.round(newPercentage)
+          });
+        } else {
+          clearInterval(simulateProgress);
+        }
+      }, 500);
 
-  // Aplicar transformaciones
-async applyTransformations(request: BatchTransformationRequest): Promise<BatchResult | null> {
-  this.isLoading.set(true);
-  this.errorMessage.set('');
-  this.progress.set({ total: request.applyToAll ? 1 : (request.imageConfigs?.length || 0), processed: 0, percentage: 0, status: 'processing' });
-
-  try {
-    const url = `${this.apiUrl}${environment.endpoints.images.transform}`;
-
-    console.log('🔄 === INICIANDO TRANSFORMACIÓN ===');
-    console.log('📤 URL:', url);
-    console.log('🔐 Token en localStorage:', localStorage.getItem('auth_token'));
-    console.log('📦 Request payload:', JSON.stringify(request, null, 2));
-    
-    // Verificar headers antes de enviar
-    const token = localStorage.getItem('auth_token');
-    console.log('🔍 Token presente para enviar:', !!token);
-    if (token) {
-      console.log('🔍 Token length:', token.length);
-      console.log('🔍 Token preview:', token.substring(0, 20) + '...');
-    }
-
-    // Simular progreso
-    const simulateProgress = setInterval(() => {
-      const currentProgress = this.progress();
-      if (currentProgress.processed < currentProgress.total) {
-        const newProcessed = currentProgress.processed + 1;
-        const newPercentage = (newProcessed / currentProgress.total) * 100;
-        this.progress.set({
-          ...currentProgress,
-          processed: newProcessed,
-          percentage: Math.round(newPercentage)
+      console.log('🚀 Enviando petición POST...');
+      const response = await this.http.post<BatchResult>(url, request).toPromise();
+      
+      clearInterval(simulateProgress);
+      
+      // ✅✅✅ PARTE CRÍTICA - GUARDAR EL RESULTADO
+      if (response) {
+        console.log('💾 Guardando resultado en currentBatch...');
+        this.currentBatch.set(response);
+        this.progress.set({ 
+          total: response.imageCount, 
+          processed: response.imageCount, 
+          percentage: 100, 
+          status: 'completed' 
         });
-      } else {
-        clearInterval(simulateProgress);
-      }
-    }, 500);
-
-    console.log('🚀 Enviando petición POST...');
-    const response = await this.http.post<BatchResult>(url, request).toPromise();
-    
-    clearInterval(simulateProgress);
-    this.progress.set({ ...this.progress(), status: 'completed' });
-    
-    console.log('✅ === TRANSFORMACIÓN EXITOSA ===');
-    console.log('📥 Response recibida:', response);
-    
-    return response || null;
-
-  } catch (error: any) {
-    console.error('❌ === ERROR EN TRANSFORMACIÓN ===');
-    console.error('💥 Error completo:', error);
-    console.error('📊 Status code:', error.status);
-    console.error('📝 Status text:', error.statusText);
-    console.error('🔍 Error message:', error.message);
-    console.error('📨 Error URL:', error.url);
-    
-    if (error.error) {
-      console.error('📋 Error body:', error.error);
-    }
-
-    this.errorMessage.set('Error al aplicar transformaciones');
-    this.progress.set({ ...this.progress(), status: 'error' });
         
-    return null;
+        console.log('✅ Estado actualizado - currentBatch:', this.currentBatch());
+        console.log('✅ Estado actualizado - progress:', this.progress());
+      } else {
+        console.warn('⚠️ Response recibida pero es null o undefined');
+      }
+      
+      console.log('✅ === TRANSFORMACIÓN EXITOSA ===');
+      console.log('📥 Response recibida:', response);
+      
+      return response || null;
 
-  } finally {
-    this.isLoading.set(false);
-    console.log('🏁 === TRANSFORMACIÓN FINALIZADA ===');
+    } catch (error: any) {
+      console.error('❌ === ERROR EN TRANSFORMACIÓN ===', error);
+      this.errorMessage.set('Error al aplicar transformaciones');
+      this.progress.set({ ...this.progress(), status: 'error' });
+      return null;
+    } finally {
+      this.isLoading.set(false);
+      console.log('🏁 === TRANSFORMACIÓN FINALIZADA ===');
+      console.log('🔍 Estado final - currentBatch:', this.currentBatch());
+      console.log('🔍 Estado final - progress:', this.progress());
+      console.log('🔍 Estado final - hasProcessedBatch:', this.hasProcessedBatch());
+    }
   }
-}
 
   // Descargar resultado
-  // Dentro de tu ImageService existente, agrega estas propiedades:
-  public currentBatch = signal<BatchResult | null>(null);
-
-  // Y estos métodos NUEVOS:
   async downloadResult(batchId: string, downloadType: 'zip' | 'individual' = 'zip'): Promise<void> {
     try {
       let url: string;
@@ -187,6 +189,8 @@ async applyTransformations(request: BatchTransformationRequest): Promise<BatchRe
       } else {
         url = `${this.apiUrl}/images/download/${batchId}`;
       }
+      
+      console.log('📥 Iniciando descarga:', { batchId, downloadType, url });
       
       // Crear enlace de descarga
       const link = document.createElement('a');
@@ -198,7 +202,10 @@ async applyTransformations(request: BatchTransformationRequest): Promise<BatchRe
       link.click();
       document.body.removeChild(link);
       
+      console.log('✅ Descarga iniciada');
+      
     } catch (error) {
+      console.error('❌ Error en downloadResult:', error);
       this.errorMessage.set('Error al descargar los resultados');
       throw error;
     }
@@ -209,6 +216,8 @@ async applyTransformations(request: BatchTransformationRequest): Promise<BatchRe
     try {
       const url = `${this.apiUrl}/images/download/${imageId}`;
       
+      console.log('📥 Iniciando descarga individual:', { imageId, filename, url });
+      
       const link = document.createElement('a');
       link.href = url;
       link.target = '_blank';
@@ -218,7 +227,10 @@ async applyTransformations(request: BatchTransformationRequest): Promise<BatchRe
       link.click();
       document.body.removeChild(link);
       
+      console.log('✅ Descarga individual iniciada');
+      
     } catch (error) {
+      console.error('❌ Error en downloadSingleImage:', error);
       this.errorMessage.set('Error descargando imagen individual');
       throw error;
     }
@@ -226,6 +238,7 @@ async applyTransformations(request: BatchTransformationRequest): Promise<BatchRe
 
   // Método para simular un batch completado (para testing)
   setCurrentBatch(batch: BatchResult): void {
+    console.log('🧪 setCurrentBatch llamado con:', batch);
     this.currentBatch.set(batch);
     this.progress.set({ 
       total: batch.imageCount, 
@@ -237,6 +250,7 @@ async applyTransformations(request: BatchTransformationRequest): Promise<BatchRe
 
   // Resetear estado
   reset(): void {
+    console.log('🔄 Reseteando estado del servicio...');
     this.selectedImages.set([]);
     this.currentBatch.set(null);
     this.progress.set({ 
@@ -245,49 +259,27 @@ async applyTransformations(request: BatchTransformationRequest): Promise<BatchRe
       percentage: 0, 
       status: 'idle' 
     });
-}
-
-
-
-
-
-
-
-// Agregar estas propiedades al servicilast 
-
-// Modificar applyTransformations para guardar el resultado
-async applyTransformations2(request: BatchTransformationRequest): Promise<BatchResult | null> {
-  this.isLoading.set(true);
-  this.errorMessage.set('');
-  
-  try {
-    const url = `${this.apiUrl}${environment.endpoints.images.transform}`;
-    
-    const response = await this.http.post<BatchResult>(url, request).toPromise();
-    
-    if (response) {
-      // GUARDAR EL RESULTADO PARA EL DOWNLOAD
-      this.currentBatch.set(response);
-      this.progress.set({ 
-        total: response.imageCount, 
-        processed: response.imageCount, 
-        percentage: 100, 
-        status: 'completed' 
-      });
-    }
-    
-    return response || null;
-  } catch (error) {
-    this.errorMessage.set('Error al aplicar transformaciones');
-    this.progress.set({ ...this.progress(), status: 'error' });
-    return null;
-  } finally {
-    this.isLoading.set(false);
+    this.errorMessage.set('');
+    console.log('✅ Estado reseteado');
   }
-}
 
-// Método para verificar si hay un batch listo para descargar
-hasProcessedBatch(): boolean {
-  return this.currentBatch() !== null && this.progress().status === 'completed';
-}
+  // Método para verificar si hay un batch listo para descargar
+  hasProcessedBatch(): boolean {
+    const hasBatch = this.currentBatch() !== null;
+    const isCompleted = this.progress().status === 'completed';
+    
+    console.log('🔍 SERVICE - hasProcessedBatch check:');
+    console.log('🔍 - currentBatch:', this.currentBatch());
+    console.log('🔍 - hasBatch:', hasBatch);
+    console.log('🔍 - progress.status:', this.progress().status);
+    console.log('🔍 - isCompleted:', isCompleted);
+    console.log('🔍 - RESULT:', hasBatch && isCompleted);
+    
+    return hasBatch && isCompleted;
+  }
+
+  // ✅ ELIMINAR LOS MÉTODOS DUPLICADOS:
+  // - applyTransformations2 
+  // - applyTransformations3
+  // Estos métodos causan confusión y no se deben usar
 }
