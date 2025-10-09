@@ -443,32 +443,48 @@ export class TransformComponent {
     return transformations.map(t => t.name).join(', ');
   }
 
-  async applyTransformations(): Promise<void> {
-    if (!this.canProceed()) return;
+ async applyTransformations(): Promise<void> {
+  if (!this.canProceed()) return;
 
-    let request: any;
+  let request: any;
 
-    if (this.isBatchMode()) {
-      request = {
-        applyToAll: true,
-        transformations: this.selectedTransformations(),
-        outputFormat: this.selectedFormat(),
-        images: this.selectedImages().map(img => img.id)
-      };
-    } else {
-      request = {
-        applyToAll: false,
-        imageConfigs: Array.from(this.individualConfigs().values()),
-        images: this.selectedImages().map(img => img.id)
-      };
-    }
-
-    const result = await this.imageService.applyTransformations(request);
-    if (result) {
-      this.router.navigate(['/images/download']);
-    }
+  if (this.isBatchMode()) {
+    request = {
+      applyToAll: true,
+      transformations: this.selectedTransformations(),
+      outputFormat: this.selectedFormat(),
+      images: this.selectedImages().map(img => img.id)
+    };
+  } else {
+    request = {
+      applyToAll: false,
+      imageConfigs: Array.from(this.individualConfigs().values()),
+      images: this.selectedImages().map(img => img.id)
+    };
   }
 
+  console.log('🔄 TransformComponent - Iniciando transformación...');
+  console.log('📤 Request enviado:', request);
+  
+  const result = await this.imageService.applyTransformations(request);
+  
+  if (result) {
+    console.log('✅ TransformComponent - Transformación exitosa, navegando...');
+    console.log('📊 Estado del servicio antes de navegar:');
+    console.log('📊 - currentBatch:', this.imageService.currentBatch());
+    console.log('📊 - progress:', this.imageService.progress());
+    console.log('📊 - hasProcessedBatch:', this.imageService.hasProcessedBatch());
+    
+    // Esperar un tick del ciclo de detección de cambios
+    setTimeout(() => {
+      console.log('🧭 Navegando a /images/download...');
+      this.router.navigate(['/images/download']);
+    }, 100);
+  } else {
+    console.error('❌ TransformComponent - Transformación falló');
+    this.imageService.errorMessage.set('Error en la transformación');
+  }
+}
   goBack(): void {
     this.router.navigate(['/images/upload']);
   }

@@ -215,11 +215,18 @@ export class DownloadComponent implements OnInit {
   currentBatch = this.imageService.currentBatch;
 
   ngOnInit(): void {
+    console.log('🔄 DownloadComponent - ngOnInit');
+    console.log('🔍 Estado inicial del servicio:');
+    console.log('🔍 - currentBatch:', this.currentBatch());
+    console.log('🔍 - progress:', this.imageService.progress());
+    console.log('🔍 - hasResults():', this.hasResults());
     // No cargar datos de demo - mostrar estado real
   }
 
   hasResults(): boolean {
+    console.log('📋 DownloadComponent - hasResults llamado');
     return this.imageService.hasProcessedBatch();
+    
   }
 
   getDominantFormat(): string {
