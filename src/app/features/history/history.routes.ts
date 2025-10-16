@@ -12,6 +12,10 @@ export const historyRoutes: Routes = [
       {
         path: 'list',
         loadComponent: () => import('./components/history-list/history-list.component').then(m => m.HistoryListComponent)
+      },
+      {
+        path: 'detail/:id',
+        loadComponent: () => import('./components/history-detail/history-detail.component').then(m => m.HistoryDetailComponent)
       }
     ]
   }
