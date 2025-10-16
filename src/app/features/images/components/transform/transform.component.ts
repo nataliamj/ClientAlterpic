@@ -706,52 +706,50 @@ export class TransformComponent {
       }
     }
   }
+async applyTransformations(): Promise<void> {
+  if (!this.canProceed()) return;
 
-  async applyTransformations(): Promise<void> {
-    if (!this.canProceed()) return;
+  let request: any;
 
-    let request: any;
-
-    if (this.isBatchMode()) {
-      request = {
-        applyToAll: true,
-        transformations: this.selectedTransformations().map(t => ({
+  if (this.isBatchMode()) {
+    request = {
+      applyToAll: true,
+      transformations: this.selectedTransformations().map(t => ({
+        ...t,
+        parameters: t.parameters || {}  
+      })),
+      outputFormat: this.selectedFormat(),
+      images: this.selectedImages().map(img => img.id)
+    };
+  } else {
+    request = {
+      applyToAll: false,
+      imageConfigs: Array.from(this.individualConfigs().values()).map(config => ({
+        ...config,
+        transformations: config.transformations.map(t => ({
           ...t,
-          parameters: t.parameters || {}
-        })),
-        outputFormat: this.selectedFormat() === 'ORIGINAL' ? undefined : this.selectedFormat(),
-        images: this.selectedImages().map(img => img.id)
-      };
-    } else {
-      request = {
-        applyToAll: false,
-        imageConfigs: Array.from(this.individualConfigs().values()).map(config => ({
-          ...config,
-          outputFormat: config.outputFormat === 'ORIGINAL' ? undefined : config.outputFormat,
-          transformations: config.transformations.map(t => ({
-            ...t,
-            parameters: t.parameters || {}
-          }))
-        })),
-        images: this.selectedImages().map(img => img.id)
-      };
-    }
-
-    console.log('TransformComponent - Iniciando transformación...');
-    console.log('Request enviado:', request);
-    
-    const result = await this.imageService.applyTransformations(request);
-    
-    if (result) {
-      console.log('TransformComponent - Transformación exitosa, navegando...');
-      setTimeout(() => {
-        this.router.navigate(['/images/download']);
-      }, 100);
-    } else {
-      console.error('TransformComponent - Transformación falló');
-      this.imageService.errorMessage.set('Error en la transformación');
-    }
+          parameters: t.parameters || {} 
+        }))
+      })),
+      images: this.selectedImages().map(img => img.id)
+    };
   }
+
+  console.log('TransformComponent - Iniciando transformación...');
+  console.log('Request enviado:', request);
+  
+  const result = await this.imageService.applyTransformations(request);
+  
+  if (result) {
+    console.log('TransformComponent - Transformación exitosa, navegando...');
+    setTimeout(() => {
+      this.router.navigate(['/images/download']);
+    }, 100);
+  } else {
+    console.error('TransformComponent - Transformación falló');
+    this.imageService.errorMessage.set('Error en la transformación');
+  }
+}
 
   goBack(): void {
     this.router.navigate(['/images/upload']);
