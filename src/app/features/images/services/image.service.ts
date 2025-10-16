@@ -103,9 +103,60 @@ export class ImageService {
       this.isLoading.set(false);
     }
   }
+  
+async applyTransformations(request: BatchTransformationRequest): Promise<BatchResult | null> {
+  this.isLoading.set(true);
+  this.errorMessage.set('');
+  
+  try {
+    const url = `${this.apiUrl}${environment.endpoints.images.transform}`;
+
+    console.log('=== INICIANDO TRANSFORMACIÓN ===');
+    console.log('Request payload:', JSON.stringify(request, null, 2));
+    
+    // Asegurar que todos los parámetros tengan valores por defecto si son undefined
+    if (request.transformations) {
+      request.transformations = request.transformations.map(trans => ({
+        ...trans,
+        parameters: trans.parameters || {}
+      }));
+    }
+    
+    if (request.imageConfigs) {
+      request.imageConfigs = request.imageConfigs.map(config => ({
+        ...config,
+        transformations: config.transformations.map(trans => ({
+          ...trans,
+          parameters: trans.parameters || {}
+        }))
+      }));
+    }
+
+    const response = await this.http.post<BatchResult>(url, request).toPromise();
+    
+    if (response) {
+      this.currentBatch.set(response);
+      this.progress.set({ 
+        total: response.imageCount, 
+        processed: response.imageCount, 
+        percentage: 100, 
+        status: 'completed' 
+      });
+    }
+    
+    return response || null;
+
+  } catch (error: any) {
+    console.error('Error en transformación:', error);
+    this.errorMessage.set('Error al aplicar transformaciones');
+    return null;
+  } finally {
+    this.isLoading.set(false);
+  }
+}
 
   //          SOLO UN MÉTODO applyTransformations - EL CORRECTO
-  async applyTransformations(request: BatchTransformationRequest): Promise<BatchResult | null> {
+  async applyTransformations2(request: BatchTransformationRequest): Promise<BatchResult | null> {
     this.isLoading.set(true);
     this.errorMessage.set('');
     this.progress.set({ 

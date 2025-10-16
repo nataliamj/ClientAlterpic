@@ -5,11 +5,12 @@ import { Transformation, ImageTransformationConfig } from '../../models/image.mo
 import { SidebarComponent } from '../../../../shared/components/sidebar/sidebar.component';
 import { HeaderComponent } from '../../../../shared/components/header/header.component';
 import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-transform',
   standalone: true,
-  imports: [SidebarComponent, HeaderComponent, RouterLink, FormsModule],
+  imports: [CommonModule, SidebarComponent, HeaderComponent, RouterLink, FormsModule],
   template: `
     <div class="min-h-screen bg-gradient-to-br from-blue-600 to-purple-700">
       <div class="flex">
@@ -87,11 +88,11 @@ import { FormsModule } from '@angular/forms';
                       }
                     </div>
 
-                    <!-- Ajustes -->
-                    <div class="space-y-2 mb-4">
+                    <!-- Ajustes con controles específicos -->
+                    <div class="space-y-3 mb-4">
                       @for (transformation of adjustmentTransformations; track transformation.id) {
-                        <div class="p-2 bg-white/5 rounded text-sm">
-                          <label class="flex items-center cursor-pointer"
+                        <div class="p-3 bg-white/5 rounded-lg">
+                          <label class="flex items-center cursor-pointer mb-2"
                                 [class.opacity-50]="!canAddMoreTransformations() && !isSelected(transformation.id)">
                             <input 
                               type="checkbox" 
@@ -100,21 +101,182 @@ import { FormsModule } from '@angular/forms';
                               [disabled]="!canAddMoreTransformations() && !isSelected(transformation.id)"
                               class="rounded border-white/30 text-blue-600 focus:ring-blue-500 mr-2 w-3 h-3"
                             >
-                            <span class="text-white text-xs">{{ transformation.name }}</span>
+                            <span class="text-white text-xs font-medium">{{ transformation.name }}</span>
                           </label>
                           
+                          <!-- Controles de parámetros específicos -->
                           @if (isSelected(transformation.id)) {
-                            <div class="mt-1 pl-4">
-                              <!-- Controles de parámetros -->
+                            <div class="mt-2 pl-4 space-y-3">
+                              
+                              <!-- Escala de Grises - Sin parámetros adicionales -->
+                              @if (transformation.id === 'grayscale') {
+                                <p class="text-white/60 text-xs">No requiere parámetros adicionales</p>
+                              }
+                              
+                              <!-- Brillo -->
+                              @else if (transformation.id === 'brightness') {
+                                <div class="space-y-2">
+                                  <label class="text-white text-xs">Nivel de brillo: {{ getParam(transformation.id, 'value') || 0 }}</label>
+                                  <input 
+                                    type="range" 
+                                    min="-100" 
+                                    max="100" 
+                                    [value]="getParam(transformation.id, 'value') || 0"
+                                    (input)="updateParam(transformation.id, 'value', $event)"
+                                    class="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer slider"
+                                  >
+                                  <div class="flex justify-between text-white/60 text-xs">
+                                    <span>-100</span>
+                                    <span>0</span>
+                                    <span>+100</span>
+                                  </div>
+                                </div>
+                              }
+                              
+                              <!-- Contraste -->
+                              @else if (transformation.id === 'contrast') {
+                                <div class="space-y-2">
+                                  <label class="text-white text-xs">Nivel de contraste: {{ getParam(transformation.id, 'value') || 0 }}</label>
+                                  <input 
+                                    type="range" 
+                                    min="-100" 
+                                    max="100" 
+                                    [value]="getParam(transformation.id, 'value') || 0"
+                                    (input)="updateParam(transformation.id, 'value', $event)"
+                                    class="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer slider"
+                                  >
+                                  <div class="flex justify-between text-white/60 text-xs">
+                                    <span>-100</span>
+                                    <span>0</span>
+                                    <span>+100</span>
+                                  </div>
+                                </div>
+                              }
+                              
+                              <!-- Desenfoque -->
+                              @else if (transformation.id === 'blur') {
+                                <div class="space-y-2">
+                                  <label class="text-white text-xs">Radio de desenfoque: {{ getParam(transformation.id, 'radius') || 0 }}px</label>
+                                  <input 
+                                    type="range" 
+                                    min="0" 
+                                    max="50" 
+                                    [value]="getParam(transformation.id, 'radius') || 0"
+                                    (input)="updateParam(transformation.id, 'radius', $event)"
+                                    class="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer slider"
+                                  >
+                                  <div class="flex justify-between text-white/60 text-xs">
+                                    <span>0</span>
+                                    <span>25</span>
+                                    <span>50</span>
+                                  </div>
+                                </div>
+                              }
+                              
+                              <!-- Nitidez -->
+                              @else if (transformation.id === 'sharpen') {
+                                <div class="space-y-2">
+                                  <label class="text-white text-xs">Nivel de nitidez: {{ getParam(transformation.id, 'value') || 0 }}</label>
+                                  <input 
+                                    type="range" 
+                                    min="0" 
+                                    max="100" 
+                                    [value]="getParam(transformation.id, 'value') || 0"
+                                    (input)="updateParam(transformation.id, 'value', $event)"
+                                    class="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer slider"
+                                  >
+                                  <div class="flex justify-between text-white/60 text-xs">
+                                    <span>0</span>
+                                    <span>50</span>
+                                    <span>100</span>
+                                  </div>
+                                </div>
+                              }
+                              
+                              <!-- Rotación -->
+                              @else if (transformation.id === 'rotate') {
+                                <div class="space-y-3">
+                                  <div class="grid grid-cols-2 gap-2">
+                                    <button 
+                                      (click)="setRotation(90)"
+                                      class="p-2 bg-white/10 text-white rounded text-xs hover:bg-white/20 transition"
+                                    >
+                                      90° Derecha
+                                    </button>
+                                    <button 
+                                      (click)="setRotation(-90)"
+                                      class="p-2 bg-white/10 text-white rounded text-xs hover:bg-white/20 transition"
+                                    >
+                                      90° Izquierda
+                                    </button>
+                                    <button 
+                                      (click)="setRotation(180)"
+                                      class="p-2 bg-white/10 text-white rounded text-xs hover:bg-white/20 transition"
+                                    >
+                                      180° Volteo
+                                    </button>
+                                    <button 
+                                      (click)="setRotation(0)"
+                                      class="p-2 bg-white/10 text-white rounded text-xs hover:bg-white/20 transition"
+                                    >
+                                      Restablecer
+                                    </button>
+                                  </div>
+                                  <div class="space-y-2">
+                                    <label class="text-white text-xs">Rotación personalizada: {{ getParam(transformation.id, 'degrees') || 0 }}°</label>
+                                    <input 
+                                      type="range" 
+                                      min="0" 
+                                      max="360" 
+                                      [value]="getParam(transformation.id, 'degrees') || 0"
+                                      (input)="updateParam(transformation.id, 'degrees', $event)"
+                                      class="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer slider"
+                                    >
+                                    <div class="flex justify-between text-white/60 text-xs">
+                                      <span>0°</span>
+                                      <span>180°</span>
+                                      <span>360°</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              }
+                              
+                              <!-- Marca de agua -->
+                              @else if (transformation.id === 'watermark') {
+                                <div class="space-y-2">
+                                  <label class="text-white text-xs">Texto de marca de agua:</label>
+                                  <input 
+                                    type="text" 
+                                    [value]="getParam(transformation.id, 'text') || ''"
+                                    (input)="updateParam(transformation.id, 'text', $event)"
+                                    placeholder="Ingresa tu texto (máx. 30 caracteres)"
+                                    maxlength="30"
+                                    class="w-full p-2 bg-white/10 border border-white/20 rounded text-white text-xs placeholder-white/40 focus:outline-none focus:border-blue-400"
+                                  >
+                                  <div class="flex justify-between text-white/60 text-xs">
+                                    <span>Texto visible en la imagen</span>
+                                    <span>{{ (getParam(transformation.id, 'text') || '').length }}/30</span>
+                                  </div>
+                                </div>
+                              }
+                              
+                              <!-- Volteos - Sin parámetros adicionales -->
+                              @else if (transformation.id === 'flip' || transformation.id === 'flop') {
+                                <p class="text-white/60 text-xs">No requiere parámetros adicionales</p>
+                              }
+                              
                             </div>
                           }
                         </div>
                       }
                     </div>
 
-                    <!-- Formato de salida - SOLO en modo batch o cuenta en individual -->
-                    <div class="p-2 bg-white/5 rounded">
-                      <h4 class="text-white font-semibold text-xs mb-2">Formato de salida</h4>
+                    <!-- Formato de salida - OPCIONAL -->
+                    <div class="p-3 bg-white/5 rounded-lg">
+                      <h4 class="text-white font-semibold text-xs mb-2">Formato de salida (Opcional)</h4>
+                      <p class="text-white/60 text-xs mb-2">
+                        Si no seleccionas formato, se mantendrá el formato original
+                      </p>
                       <div class="flex gap-3">
                         @for (format of outputFormats; track format) {
                           <label class="flex items-center"
@@ -131,9 +293,22 @@ import { FormsModule } from '@angular/forms';
                             <span class="text-white text-xs">{{ format }}</span>
                           </label>
                         }
+                        <label class="flex items-center">
+                          <input 
+                            type="radio" 
+                            name="outputFormat"
+                            value="ORIGINAL"
+                            [checked]="selectedFormat() === 'ORIGINAL'"
+                            (change)="updateOutputFormat('ORIGINAL')"
+                            class="mr-1 w-3 h-3"
+                          >
+                          <span class="text-white text-xs">Original</span>
+                        </label>
                       </div>
                       @if (isBatchMode()) {
-                        <p class="text-white/60 text-xs mt-1">El formato de salida cuenta como una transformación</p>
+                        <p class="text-white/60 text-xs mt-1">
+                          El formato de salida cuenta como una transformación solo si se selecciona
+                        </p>
                       }
                     </div>
                   </div>
@@ -195,12 +370,14 @@ import { FormsModule } from '@angular/forms';
                                   (click)="removeTransformation(transformation.id)"
                                   class="text-red-400 hover:text-red-300 text-xs flex-shrink-0"
                                 >
-                                   
+                                  ×
                                 </button>
                               </div>
                             }
                             <div class="text-white flex justify-between items-center">
-                              <span class="truncate mr-2">Formato: {{ selectedFormat() }}</span>
+                              <span class="truncate mr-2">
+                                Formato: {{ selectedFormat() === 'ORIGINAL' ? 'Original' : selectedFormat() }}
+                              </span>
                             </div>
                           } @else {
                             <p class="text-white/60 text-xs">
@@ -254,7 +431,28 @@ import { FormsModule } from '@angular/forms';
       </div>
     </div>
   `,
-  styles: ``
+  styles: [`
+    .slider::-webkit-slider-thumb {
+      appearance: none;
+      height: 16px;
+      width: 16px;
+      border-radius: 50%;
+      background: #3b82f6;
+      cursor: pointer;
+      border: 2px solid white;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .slider::-moz-range-thumb {
+      height: 16px;
+      width: 16px;
+      border-radius: 50%;
+      background: #3b82f6;
+      cursor: pointer;
+      border: 2px solid white;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+  `]
 })
 export class TransformComponent {
   private router = inject(Router);
@@ -262,7 +460,7 @@ export class TransformComponent {
 
   // Signals principales
   selectedTransformations = signal<Transformation[]>([]);
-  selectedFormat = signal<'JPG' | 'PNG' | 'TIF'>('JPG');
+  selectedFormat = signal<'JPG' | 'PNG' | 'TIF' | 'ORIGINAL'>('ORIGINAL');
   currentImageId = signal<string>('');
   individualConfigs = signal<Map<string, ImageTransformationConfig>>(new Map());
 
@@ -277,10 +475,12 @@ export class TransformComponent {
 
   currentTransformationsCount = computed(() => {
     if (this.isBatchMode()) {
-      return this.selectedTransformations().length + 1;
+      const formatCount = this.selectedFormat() === 'ORIGINAL' ? 0 : 1;
+      return this.selectedTransformations().length + formatCount;
     } else {
       const config = this.individualConfigs().get(this.currentImageId());
-      return (config?.transformations.length || 0) + 1;
+      const formatCount = config?.outputFormat === 'ORIGINAL' ? 0 : 1;
+      return (config?.transformations.length || 0) + formatCount;
     }
   });
 
@@ -298,7 +498,7 @@ export class TransformComponent {
 
   validationMessage = computed(() => {
     if (this.isBatchMode()) {
-      return 'Debes seleccionar al menos 1 transformación (máximo 4 + formato)';
+      return 'Debes seleccionar al menos 1 transformación (máximo 4 + formato opcional)';
     } else {
       const incomplete = this.selectedImages().filter(image => 
         !this.individualConfigs().get(image.id)?.transformations.length
@@ -313,14 +513,14 @@ export class TransformComponent {
   basicTransformations: Transformation[] = [
     { id: 'grayscale', name: 'Escala de grises', type: 'filter' },
     { id: 'flip', name: 'Voltear horizontalmente', type: 'filter' },
-    { id: 'flop', name: 'Voltear verticalmente', type: 'filter' },
-    { id: 'sharpen', name: 'Aumentar nitidez', type: 'filter' }
+    { id: 'flop', name: 'Voltear verticalmente', type: 'filter' }
   ];
 
   adjustmentTransformations: Transformation[] = [
     { id: 'brightness', name: 'Ajustar brillo', type: 'adjustment', parameters: { value: 0 } },
     { id: 'contrast', name: 'Ajustar contraste', type: 'adjustment', parameters: { value: 0 } },
     { id: 'blur', name: 'Desenfocar', type: 'adjustment', parameters: { radius: 0 } },
+    { id: 'sharpen', name: 'Aumentar nitidez', type: 'adjustment', parameters: { value: 0 } },
     { id: 'rotate', name: 'Rotar', type: 'adjustment', parameters: { degrees: 0 } },
     { id: 'watermark', name: 'Marca de agua/texto', type: 'adjustment', parameters: { text: '' } }
   ];
@@ -340,7 +540,7 @@ export class TransformComponent {
       configs.set(image.id, {
         imageId: image.id,
         transformations: [],
-        outputFormat: 'JPG'
+        outputFormat: 'ORIGINAL'
       });
     });
     this.individualConfigs.set(configs);
@@ -350,7 +550,7 @@ export class TransformComponent {
     this.currentImageId.set(imageId);
   }
 
-  // Métodos
+  // Métodos para transformaciones
   isSelected(transformationId: string): boolean {
     if (this.isBatchMode()) {
       return this.selectedTransformations().some(t => t.id === transformationId);
@@ -415,7 +615,12 @@ export class TransformComponent {
     }
   }
 
-  updateOutputFormat(format: 'JPG' | 'PNG' | 'TIF'): void {
+  // Método para rotación rápida
+  setRotation(degrees: number): void {
+    this.updateParam('rotate', 'degrees', { target: { value: degrees } } as any);
+  }
+
+  updateOutputFormat(format: 'JPG' | 'PNG' | 'TIF' | 'ORIGINAL'): void {
     this.selectedFormat.set(format);
     
     if (!this.isBatchMode()) {
@@ -430,7 +635,8 @@ export class TransformComponent {
 
   getImageTransformationsCount(imageId: string): number {
     const config = this.individualConfigs().get(imageId);
-    return (config?.transformations.length || 0) + 1;
+    const formatCount = config?.outputFormat === 'ORIGINAL' ? 0 : 1;
+    return (config?.transformations.length || 0) + formatCount;
   }
 
   getImageTransformations(imageId: string): Transformation[] {
@@ -441,52 +647,6 @@ export class TransformComponent {
   getImageTransformationNames(imageId: string): string {
     const transformations = this.getImageTransformations(imageId);
     return transformations.map(t => t.name).join(', ');
-  }
-
- async applyTransformations(): Promise<void> {
-  if (!this.canProceed()) return;
-
-  let request: any;
-
-  if (this.isBatchMode()) {
-    request = {
-      applyToAll: true,
-      transformations: this.selectedTransformations(),
-      outputFormat: this.selectedFormat(),
-      images: this.selectedImages().map(img => img.id)
-    };
-  } else {
-    request = {
-      applyToAll: false,
-      imageConfigs: Array.from(this.individualConfigs().values()),
-      images: this.selectedImages().map(img => img.id)
-    };
-  }
-
-  console.log('  TransformComponent - Iniciando transformación...');
-  console.log('  Request enviado:', request);
-  
-  const result = await this.imageService.applyTransformations(request);
-  
-  if (result) {
-    console.log('  TransformComponent - Transformación exitosa, navegando...');
-    console.log('  Estado del servicio antes de navegar:');
-    console.log('  - currentBatch:', this.imageService.currentBatch());
-    console.log('  - progress:', this.imageService.progress());
-    console.log('  - hasProcessedBatch:', this.imageService.hasProcessedBatch());
-    
-    // Esperar un tick del ciclo de detección de cambios
-    setTimeout(() => {
-      console.log('  Navegando a /images/download...');
-      this.router.navigate(['/images/download']);
-    }, 100);
-  } else {
-    console.error('  TransformComponent - Transformación falló');
-    this.imageService.errorMessage.set('Error en la transformación');
-  }
-}
-  goBack(): void {
-    this.router.navigate(['/images/upload']);
   }
 
   getParam(transformationId: string, paramName: string): any {
@@ -502,13 +662,27 @@ export class TransformComponent {
 
   updateParam(transformationId: string, paramName: string, event: Event): void {
     const input = event.target as HTMLInputElement;
-    const value = input.type === 'range' ? parseInt(input.value) : input.value;
+    let value: any;
+    
+    if (input.type === 'range') {
+      value = parseInt(input.value);
+    } else if (input.type === 'text') {
+      value = input.value;
+    } else {
+      value = input.value;
+    }
     
     if (this.isBatchMode()) {
       this.selectedTransformations.set(
         this.selectedTransformations().map(t => 
           t.id === transformationId 
-            ? { ...t, parameters: { ...t.parameters, [paramName]: value } }
+            ? { 
+                ...t, 
+                parameters: { 
+                  ...t.parameters, 
+                  [paramName]: value 
+                } 
+              }
             : t
         )
       );
@@ -518,12 +692,68 @@ export class TransformComponent {
       if (config) {
         config.transformations = config.transformations.map(t => 
           t.id === transformationId 
-            ? { ...t, parameters: { ...t.parameters, [paramName]: value } }
+            ? { 
+                ...t, 
+                parameters: { 
+                  ...t.parameters, 
+                  [paramName]: value 
+                } 
+              }
             : t
         );
         newConfigs.set(this.currentImageId(), config);
         this.individualConfigs.set(newConfigs);
       }
     }
+  }
+
+  async applyTransformations(): Promise<void> {
+    if (!this.canProceed()) return;
+
+    let request: any;
+
+    if (this.isBatchMode()) {
+      request = {
+        applyToAll: true,
+        transformations: this.selectedTransformations().map(t => ({
+          ...t,
+          parameters: t.parameters || {}
+        })),
+        outputFormat: this.selectedFormat() === 'ORIGINAL' ? undefined : this.selectedFormat(),
+        images: this.selectedImages().map(img => img.id)
+      };
+    } else {
+      request = {
+        applyToAll: false,
+        imageConfigs: Array.from(this.individualConfigs().values()).map(config => ({
+          ...config,
+          outputFormat: config.outputFormat === 'ORIGINAL' ? undefined : config.outputFormat,
+          transformations: config.transformations.map(t => ({
+            ...t,
+            parameters: t.parameters || {}
+          }))
+        })),
+        images: this.selectedImages().map(img => img.id)
+      };
+    }
+
+    console.log('TransformComponent - Iniciando transformación...');
+    console.log('Request enviado:', request);
+    
+    const result = await this.imageService.applyTransformations(request);
+    
+    if (result) {
+      console.log('TransformComponent - Transformación exitosa, navegando...');
+      setTimeout(() => {
+        this.router.navigate(['/images/download']);
+      }, 100);
+    } else {
+      console.error('TransformComponent - Transformación falló');
+      this.imageService.errorMessage.set('Error en la transformación');
+    }
+  }
+
+  goBack(): void {
+    this.router.navigate(['/images/upload']);
   }
 }
