@@ -25,8 +25,16 @@ export class HistoryService {
       console.log('Obteniendo historial del usuario...', url);
       
       const response = await this.http.get<HistoryResponse>(url).toPromise();
+
+      console.log('GET History - Respuesta completa:', response);
+      console.log('GET History - success:', response?.success);
+      console.log('GET History - data length:', response?.data?.length);
+      console.log('GET History - message:', response?.message);
       
       if (response?.success) {
+        console.log('GET History - Primer item:', response.data[0]);
+        console.log('GET History - Parámetros del primer item:', response.data[0].parametros);
+        console.log('GET History - Tipo de parámetros:', typeof response.data[0].parametros);
         const history = response.data.map(item => ({
           ...item,
           fecha_formateada: this.formatDate(item.fecha_creacion),
@@ -55,6 +63,9 @@ export class HistoryService {
 
     try {
       const url = `${this.apiUrl}${environment.endpoints.history.detail(id)}`;
+      console.log(' GET History Detail - URL:', url);
+      console.log(' GET History Detail - ID solicitado:', id);
+
       console.log(' Obteniendo detalle del historial:', url);
       
       const response = await this.http.get<{
@@ -62,8 +73,16 @@ export class HistoryService {
         data: TransformationHistory;
         message?: string;
       }>(url).toPromise();
+
+      console.log('GET History Detail - Respuesta completa:', response);
+      console.log('GET History Detail - success:', response?.success);
+      console.log('GET History Detail - data:', response?.data);
+      console.log('GET History Detail - message:', response?.message);
       
       if (response?.success && response.data) {
+        console.log('GET History Detail - Datos recibidos:', response.data);
+        console.log('GET History Detail - Parámetros recibidos:', response.data.parametros);
+        console.log('GET History Detail - Tipo de parámetros:', typeof response.data.parametros);
         const historyDetail = {
           ...response.data,
           fecha_formateada: this.formatDate(response.data.fecha_creacion),
@@ -141,7 +160,7 @@ private parseParameters(parametros: string): any {
     
     return parsed;
   } catch (error) {
-    console.log('⚠️ No se pudo parsear JSON, mostrando como texto:', parametros);
+    console.log(' No se pudo parsear JSON, mostrando como texto:', parametros);
     // Si no es JSON válido, devolver el string original
     return parametros;
   }
