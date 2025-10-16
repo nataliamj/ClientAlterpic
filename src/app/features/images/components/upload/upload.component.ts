@@ -219,23 +219,38 @@ export class UploadComponent {
   }
 
  async continueToTransform(): Promise<void> {
-  if (!this.hasSelectedImages()) return;
-
-  //   PRIMERO SUBIR IMÁGENES AL BACKEND
-  const selectedImages = this.imageService.selectedImages().filter(img => img.selected);
-  
-  console.log('   Subiendo imágenes al backend...', selectedImages.length);
-  
-  const uploadSuccess = await this.imageService.uploadImages(selectedImages);
-  
-  if (!uploadSuccess) {
-    console.error('   Error subiendo imágenes');
+  if (!this.hasSelectedImages()) {
+    console.log(' No hay imágenes seleccionadas para subir');
     return;
   }
 
-  console.log('   Imágenes subidas exitosamente');
+  const selectedImages = this.imageService.selectedImages().filter(img => img.selected);
+  
+  console.log(' === CONTINUANDO A TRANSFORMACIÓN ===');
+  console.log(' Imágenes seleccionadas para upload:', selectedImages.length);
+  console.log(' Nombres de imágenes:', selectedImages.map(img => img.name));
+  console.log(' IDs temporales:', selectedImages.map(img => img.id));
 
-  //    LUEGO NAVEGAR A TRANSFORM
+  // PRIMERO SUBIR IMÁGENES AL BACKEND
+  console.log(' Iniciando proceso de upload...');
+  
+  const uploadSuccess = await this.imageService.uploadImages(selectedImages);
+  
+  console.log(' Resultado del upload:', uploadSuccess ? '✅ EXITOSO' : '❌ FALLIDO');
+  
+  if (!uploadSuccess) {
+    console.log(' === NO SE PUEDE CONTINUAR ===');
+    console.log(' Upload falló - Deteniendo flujo');
+    console.log(' Mensaje de error del servicio:', this.imageService.errorMessage());
+    return;
+  }
+
+  console.log(' === UPLOAD COMPLETADO - CONTINUANDO ===');
+  console.log(' Todas las imágenes se subieron exitosamente');
+  console.log(' IDs que se enviarán a transformar:', selectedImages.map(img => img.id));
+  console.log(' Navegando a pantalla de transformaciones...');
+
+  // LUEGO NAVEGAR A TRANSFORM
   const mode = this.applyToAll() ? 'batch' : 'individual';
   this.imageService.transformationMode.set(mode);
 
@@ -245,6 +260,10 @@ export class UploadComponent {
     outputFormat: 'JPG'
   });
 
+  console.log(' Configuración de transformación:');
+  console.log(' Modo:', mode);
+  console.log(' ApplyToAll:', this.applyToAll());
+  
   this.router.navigate(['/images/configure']);
 }
 }
