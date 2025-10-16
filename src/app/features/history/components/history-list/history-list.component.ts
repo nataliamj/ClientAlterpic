@@ -1,6 +1,6 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { HistoryService } from '../../services/history.service';
+import { HistoryService, GroupedHistory } from '../../services/history.service';
 import { SidebarComponent } from '../../../../shared/components/sidebar/sidebar.component';
 import { HeaderComponent } from '../../../../shared/components/header/header.component';
 import { CommonModule } from '@angular/common';
@@ -21,7 +21,7 @@ import { CommonModule } from '@angular/common';
               <div class="text-center mb-8">
                 <h1 class="text-4xl font-bold text-white mb-2">Mi Historial de Transformaciones</h1>
                 <p class="text-xl text-white/80">
-                  Revisa todas las transformaciones que has aplicado a tus imágenes
+                  Revisa todas las transformaciones aplicadas a tus imágenes
                 </p>
               </div>
 
@@ -41,7 +41,7 @@ import { CommonModule } from '@angular/common';
                 </div>
                 
                 <div class="text-white/60 text-sm bg-white/10 px-3 py-1 rounded-full">
-                  {{ historyService.historyList().length }} registros encontrados
+                  {{ historyService.groupedHistory().length }} imágenes • {{ historyService.historyList().length }} transformaciones
                 </div>
               </div>
 
@@ -82,104 +82,84 @@ import { CommonModule } from '@angular/common';
                 </div>
               }
 
-              <!-- Lista de historial -->
-              @if (!historyService.isLoading() && historyService.historyList().length > 0) {
-                <div class="bg-white/10 backdrop-blur-lg rounded-2xl p-6">
-                  <div class="space-y-4">
-                    @for (item of historyService.historyList(); track item.id_transformacion; let i = $index) {
-                      <div class="bg-white/5 rounded-xl p-4 hover:bg-white/10 transition cursor-pointer"
-                           (click)="selectItem(item)">
-                        <div class="flex justify-between items-start mb-3">
-                          <div class="flex items-center space-x-3">
-                            <div class="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center">
-                              <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                              </svg>
-                            </div>
-                            <div>
-                              <h4 class="text-white font-semibold text-lg">
-                                {{ getTransformationType(item.tipo) }}
-                              </h4>
-                              <p class="text-white/60 text-sm">
-                                ID: {{ item.id_transformacion }} • Imagen: {{ item.id_imagen }}
-                              </p>
-                            </div>
+              <!-- Lista de historial agrupado por imagen -->
+              @if (!historyService.isLoading() && historyService.groupedHistory().length > 0) {
+                <div class="space-y-6">
+                  @for (group of historyService.groupedHistory(); track group.id_imagen) {
+                    <div class="bg-white/10 backdrop-blur-lg rounded-2xl p-6">
+                      <!-- Header del grupo -->
+                      <div class="flex items-center justify-between mb-4 pb-4 border-b border-white/10">
+                        <div class="flex items-center space-x-3">
+                          <div class="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
                           </div>
-                          
-                          <div class="flex items-center space-x-2">
-                            <span class="bg-green-500/20 text-green-300 px-3 py-1 rounded-full text-xs font-medium">
-                              Orden: {{ item.orden }}
-                            </span>
-                            <button 
-                              (click)="deleteItem(item.id_transformacion, $event)"
-                              class="text-red-400 hover:text-red-300 p-2 rounded-lg transition bg-white/5 hover:bg-white/10"
-                              title="Eliminar transformación"
-                            >
-                              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                              </svg>
-                            </button>
+                          <div>
+                            <h3 class="text-white font-semibold text-xl">Imagen #{{ group.id_imagen }}</h3>
+                            <p class="text-white/60 text-sm">
+                              {{ group.transformaciones.length }} transformación(es) • {{ group.fecha_formateada }}
+                            </p>
                           </div>
                         </div>
-                        
-                        <!-- Información principal -->
-                        <div class="grid md:grid-cols-3 gap-4 text-sm mb-3">
-                          <div class="flex items-center space-x-2">
-                            <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                            <span class="text-white/70">Tipo:</span>
-                            <span class="text-white font-medium">{{ item.tipo }}</span>
-                          </div>
-                          
-                          <div class="flex items-center space-x-2">
-                            <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                            </svg>
-                            <span class="text-white/70">Orden:</span>
-                            <span class="text-white font-medium">{{ item.orden }}</span>
-                          </div>
-                          
-                          <div class="flex items-center space-x-2">
-                            <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                            </svg>
-                            <span class="text-white/70">Fecha:</span>
-                            <span class="text-white">{{ item.fecha_formateada }}</span>
-                          </div>
-                        </div>
-
-                        <!-- Parámetros -->
-                        <div class="bg-black/20 rounded-lg p-3">
-                          <div class="flex items-center justify-between mb-2">
-                            <span class="text-white/70 text-sm font-medium">Parámetros de la transformación:</span>
-                            <span class="text-blue-400 text-xs">{{ getParametersType(item.parametros) }}</span>
-                          </div>
-                          <div class="font-mono text-xs text-white/80 overflow-x-auto">
-                            {{ formatParameters(item.parametros_parsed) }}
-                          </div>
-                        </div>
-
-                        <!-- Acción ver detalles -->
-                        <div class="flex justify-end mt-3 pt-3 border-t border-white/10">
-                          <button 
-                            (click)="selectItem(item)"
-                            class="text-blue-400 hover:text-blue-300 text-sm font-medium flex items-center"
-                          >
-                            Ver detalles completos
-                            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                            </svg>
-                          </button>
+                        <div class="text-white/60 text-sm bg-white/10 px-3 py-1 rounded-full">
+                          Orden: {{ getTransformationOrder(group.transformaciones) }}
                         </div>
                       </div>
-                    }
-                  </div>
+
+                      <!-- Lista de transformaciones de esta imagen -->
+                      <div class="space-y-3">
+                        @for (item of group.transformaciones; track item.id_transformacion) {
+                          <div class="bg-white/5 rounded-xl p-4 hover:bg-white/10 transition cursor-pointer"
+                               (click)="selectItem(item)">
+                            <div class="flex justify-between items-start">
+                              <div class="flex-1">
+                                <div class="flex items-center space-x-3 mb-2">
+                                  <span class="bg-green-500/20 text-green-300 px-2 py-1 rounded text-xs font-medium">
+                                    Paso {{ item.orden + 1 }}
+                                  </span>
+                                  <span class="bg-blue-500/20 text-blue-300 px-2 py-1 rounded text-xs font-medium">
+                                    {{ getTransformationType(item.tipo) }}
+                                  </span>
+                                  <span class="text-white/60 text-xs">
+                                    ID: {{ item.id_transformacion }}
+                                  </span>
+                                </div>
+                                
+                                <!-- Parámetros -->
+                                <div class="bg-black/20 rounded-lg p-2">
+                                  <div class="flex items-center justify-between mb-1">
+                                    <span class="text-white/70 text-xs">Configuración:</span>
+                                    <span class="text-blue-400 text-xs">{{ getParametersType(item.parametros) }}</span>
+                                  </div>
+                                  <div class="font-mono text-xs text-white/80 overflow-x-auto">
+                                    {{ formatParameters(item.parametros_parsed) }}
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              <div class="flex items-center space-x-2 ml-4">
+                                <button 
+                                  (click)="deleteItem(item.id_transformacion, $event)"
+                                  class="text-red-400 hover:text-red-300 p-2 rounded-lg transition bg-white/5 hover:bg-white/10"
+                                  title="Eliminar transformación"
+                                >
+                                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                  </svg>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  }
                 </div>
               }
 
               <!-- Sin resultados -->
-              @if (!historyService.isLoading() && historyService.historyList().length === 0) {
+              @if (!historyService.isLoading() && historyService.groupedHistory().length === 0) {
                 <div class="bg-white/10 backdrop-blur-lg rounded-2xl p-6 text-center">
                   <div class="w-16 h-16 bg-gray-500 rounded-full flex items-center justify-center mx-auto mb-4">
                     <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -210,7 +190,6 @@ export class HistoryListComponent implements OnInit {
 
   ngOnInit(): void {
     console.log('HistoryListComponent - Inicializando');
-    // Cargar historial automáticamente al iniciar
     this.loadHistory();
   }
 
@@ -222,36 +201,22 @@ export class HistoryListComponent implements OnInit {
   selectItem(item: any): void {
     console.log('Seleccionando item:', item);
     this.historyService.selectHistory(item);
-    // Navegar a la página de detalles
     this.router.navigate(['/history/detail', item.id_transformacion]);
   }
 
   async deleteItem(id: number, event: Event): Promise<void> {
-    event.stopPropagation(); // Prevenir que se active el click del contenedor
-    
-    const confirmDelete = confirm('¿Estás seguro de que quieres eliminar este registro del historial?');
+    event.stopPropagation();
+    const confirmDelete = confirm('¿Estás seguro de que quieres eliminar esta transformación?');
     if (confirmDelete) {
-      console.log('🗑️ Eliminando registro:', id);
+      console.log('Eliminando registro:', id);
       await this.historyService.deleteHistory(id);
     }
   }
 
   formatParameters(parameters: any): string {
-    if (!parameters) {
-      return 'Sin parámetros configurados';
-    }
-    
-    // Si es string, mostrarlo directamente
-    if (typeof parameters === 'string') {
-      return parameters;
-    }
-    
-    // Si es objeto vacío
-    if (typeof parameters === 'object' && Object.keys(parameters).length === 0) {
-      return 'Configuración predeterminada';
-    }
-    
-    // Si es objeto con propiedades
+    if (!parameters) return 'Sin parámetros configurados';
+    if (typeof parameters === 'string') return parameters;
+    if (typeof parameters === 'object' && Object.keys(parameters).length === 0) return 'Configuración predeterminada';
     if (typeof parameters === 'object') {
       try {
         return JSON.stringify(parameters, null, 2);
@@ -259,28 +224,25 @@ export class HistoryListComponent implements OnInit {
         return 'Parámetros no válidos';
       }
     }
-    
     return String(parameters);
   }
 
   getTransformationType(tipo: string): string {
     const types: {[key: string]: string} = {
-      'filtro': 'Aplicación de Filtro',
-      'escala': 'Ajuste de Escala',
-      'rotacion': 'Rotación de Imagen',
-      'recorte': 'Recorte de Imagen',
-      'brillo': 'Ajuste de Brillo',
-      'contraste': 'Ajuste de Contraste',
-      'redimension': 'Redimensionamiento',
-      'espejo': 'Efecto Espejo'
+      'grayscale': 'Escala de Grises',
+      'blur': 'Desenfoque',
+      'brightness': 'Brillo',
+      'contrast': 'Contraste',
+      'rotate': 'Rotación',
+      'flip': 'Volteo',
+      'resize': 'Redimensionar',
+      'crop': 'Recortar'
     };
-    
-    return types[tipo] || `Transformación: ${tipo}`;
+    return types[tipo] || tipo;
   }
 
   getParametersType(parametros: string): string {
     if (!parametros) return 'Sin parámetros';
-    
     try {
       const parsed = JSON.parse(parametros);
       if (typeof parsed === 'object' && Object.keys(parsed).length > 0) {
@@ -290,5 +252,9 @@ export class HistoryListComponent implements OnInit {
     } catch {
       return 'Texto plano';
     }
+  }
+
+  getTransformationOrder(transformaciones: any[]): string {
+    return transformaciones.map(t => t.orden + 1).join(' → ');
   }
 }
