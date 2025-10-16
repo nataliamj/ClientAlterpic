@@ -15,6 +15,7 @@ export const environment = {
             upload: '/images/upload',
             transform: '/images/transform',
             download: '/images/download',
+            loteIndividual: '/lote-individual/procesar',
             list: '/images',
             delete: (id: number) => `/images/${id}`
         },

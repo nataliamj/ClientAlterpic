@@ -29,11 +29,10 @@ export interface ImageTransformationRequest {
 
 export interface BatchTransformationRequest {
   applyToAll: boolean;
-  // Cuando applyToAll es true, usamos transformations y outputFormat general
   transformations?: Transformation[];
   outputFormat?: string;
-  // Cuando applyToAll es false, usamos imageConfigs para configuraciones individuales
   imageConfigs?: ImageTransformationConfig[];
+  images?: string[]; // ✅ AGREGAR ESTA PROPIEDAD
 }
 
 export interface TransformationProgress {

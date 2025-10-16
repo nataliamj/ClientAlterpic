@@ -1,4 +1,4 @@
- import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, computed } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { ImageService } from '../../services/image.service';
 import { SidebarComponent } from '../../../../shared/components/sidebar/sidebar.component';
@@ -102,7 +102,7 @@ import { CommonModule } from '@angular/common';
                     <div class="bg-white/5 rounded-lg p-4 text-center">
                       <p class="text-white/60 text-sm">Formato</p>
                       <p class="text-white text-xl font-semibold">
-                        {{ getDominantFormat() }}
+                        {{ dominantFormat() }}
                       </p>
                     </div>
                   </div>
@@ -211,28 +211,22 @@ export class DownloadComponent implements OnInit {
   private router = inject(Router);
   imageService = inject(ImageService);
 
-  // Usar la señal del servicio directamente
+  // Usar las señales del servicio directamente
   currentBatch = this.imageService.currentBatch;
-
-  ngOnInit(): void {
-    console.log('  DownloadComponent - ngOnInit');
-    console.log('  Estado inicial del servicio:');
-    console.log('  - currentBatch:', this.currentBatch());
-    console.log('  - progress:', this.imageService.progress());
-    console.log('  - hasResults():', this.hasResults());
-    // No cargar datos de demo - mostrar estado real
-  }
-
-  hasResults(): boolean {
-    console.log('  DownloadComponent - hasResults llamado');
-    return this.imageService.hasProcessedBatch();
+  progress = this.imageService.progress;
+  
+  // ✅ SEÑALES COMPUTADAS - Reemplazan las funciones que causaban múltiples llamadas
+  hasResults = computed(() => {
+    const batch = this.currentBatch();
+    const progressStatus = this.progress().status;
+    return !!(batch && batch.images && batch.images.length > 0 && progressStatus === 'completed');
+  });
+  
+  dominantFormat = computed(() => {
+    const batch = this.currentBatch();
+    if (!batch?.images?.length) return 'JPG';
     
-  }
-
-  getDominantFormat(): string {
-    if (!this.currentBatch()?.images?.length) return 'JPG';
-    
-    const formats = this.currentBatch()!.images.map(img => img.format.toUpperCase());
+    const formats = batch.images.map(img => img.format.toUpperCase());
     const formatCount = formats.reduce((acc, format) => {
       acc[format] = (acc[format] || 0) + 1;
       return acc;
@@ -241,6 +235,14 @@ export class DownloadComponent implements OnInit {
     return Object.keys(formatCount).reduce((a, b) => 
       formatCount[a] > formatCount[b] ? a : b
     );
+  });
+
+  ngOnInit(): void {
+    console.log('  DownloadComponent - ngOnInit');
+    console.log('  Estado inicial del servicio:');
+    console.log('  - currentBatch:', this.currentBatch());
+    console.log('  - progress:', this.progress());
+    console.log('  - hasResults:', this.hasResults());
   }
 
   async downloadZip(): Promise<void> {
