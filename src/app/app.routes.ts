@@ -16,6 +16,11 @@ export const routes: Routes = [
         loadChildren:() => import('./features/images/images.routes').then(m => m.imagesRoutes)
     },
 
+    {
+    path: 'history', 
+    loadChildren:() => import('./features/history/history.routes').then(m => m.historyRoutes),
+   },
+
     { 
         path: '', 
         redirectTo: 'home', 
