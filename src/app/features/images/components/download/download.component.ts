@@ -8,7 +8,7 @@ import { CommonModule } from '@angular/common';
 @Component({
   selector: 'app-download',
   standalone: true,
-  imports: [CommonModule, SidebarComponent, HeaderComponent, RouterLink],
+  imports: [CommonModule, SidebarComponent, HeaderComponent],
   template: `
     <div class="min-h-screen bg-gradient-to-br from-blue-600 to-purple-700">
       <div class="flex">

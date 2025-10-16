@@ -1,5 +1,5 @@
   import { Component, inject, signal, computed } from '@angular/core';
-  import { Router, RouterLink } from '@angular/router';
+  import { Router,  } from '@angular/router';
   import { ImageService } from '../../services/image.service';
   import { Transformation, ImageTransformationConfig } from '../../models/image.model';
   import { SidebarComponent } from '../../../../shared/components/sidebar/sidebar.component';
@@ -10,7 +10,7 @@
   @Component({
     selector: 'app-transform',
     standalone: true,
-    imports: [CommonModule, SidebarComponent, HeaderComponent, RouterLink, FormsModule],
+    imports: [CommonModule, SidebarComponent, HeaderComponent, FormsModule],
     template: `
       <div class="min-h-screen bg-gradient-to-br from-blue-600 to-purple-700">
         <div class="flex">

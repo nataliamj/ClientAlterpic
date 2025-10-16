@@ -9,7 +9,7 @@ import { FormsModule } from '@angular/forms';
 @Component({
   selector: 'app-upload',
   standalone: true,
-  imports: [SidebarComponent, HeaderComponent, RouterLink, FormsModule],
+  imports: [SidebarComponent, HeaderComponent, FormsModule],
   template: `
     <div class="min-h-screen bg-gradient-to-br from-blue-600 to-purple-700">
       <div class="flex">
