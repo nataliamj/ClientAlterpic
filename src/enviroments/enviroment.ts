@@ -19,8 +19,8 @@ export const environment = {
             delete: (id: number) => `/images/${id}`
         },
         history: {
-            list: '/history',
-            download: (id: number) => `/history/${id}/download`
-        }
+            list: '/history/transformations',
+            download: (id: number) => `/history/transformations/${id}/download`
+}
     }
 };

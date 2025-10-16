@@ -22,7 +22,7 @@ export class HistoryService {
 
     try {
       const url = `${this.apiUrl}${environment.endpoints.history.list}`;
-      console.log('🔄 Obteniendo historial...', url);
+      console.log(' Obteniendo historial...', url);
       
       const response = await this.http.get<HistoryResponse>(url).toPromise();
       
@@ -40,7 +40,7 @@ export class HistoryService {
         throw new Error(response?.message || 'Error al obtener historial');
       }
     } catch (error: any) {
-      console.error('❌ Error obteniendo historial:', error);
+      console.error('Error obteniendo historial:', error);
       this.errorMessage.set('Error al cargar el historial');
       return [];
     } finally {
@@ -93,13 +93,13 @@ export class HistoryService {
         // Remover del listado actual
         const currentList = this.historyList().filter(item => item.id_transformacion !== id);
         this.historyList.set(currentList);
-        console.log('✅ Registro eliminado del historial');
+        console.log(' Registro eliminado del historial');
         return true;
       } else {
         throw new Error(response?.message || 'Error al eliminar del historial');
       }
     } catch (error: any) {
-      console.error('❌ Error eliminando del historial:', error);
+      console.error(' Error eliminando del historial:', error);
       this.errorMessage.set('Error al eliminar del historial');
       return false;
     }
